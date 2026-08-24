@@ -126,20 +126,6 @@ Highest Confidence Class
 Disease Prediction
 ```
 
-## Unknown Disease Handling
-
-The inference system is designed so that a prediction should not automatically be treated as a known disease when the input does not sufficiently match the trained classes.
-
-A confidence threshold can be used during inference.
-
-If the prediction confidence is below the selected threshold, the system can return:
-
-```text
-Unknown Disease
-```
-
-This prevents the system from confidently assigning an unsupported disease class to an unfamiliar image.
-
 ## Training Environment
 
 The models can be trained locally using:

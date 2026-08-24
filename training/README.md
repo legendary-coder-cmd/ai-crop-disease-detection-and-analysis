@@ -1,7 +1,21 @@
-# Training
+# CropAI Model Training
 
-This directory contains the trained crop disease classification models and training resources.
+This directory contains the training resources and trained AI models used by **CropAI – Multi-Crop AI Farm Assist**.
 
-## Keras Models
+The project uses crop-specific disease classification models trained on leaf-image datasets. Separate models are used for Corn, Cotton, Paddy, Sugarcane, and Wheat.
 
-The keras models/ directory contains the trained TensorFlow/Keras models for the supported crops.
+---
+
+## Training Directory
+
+```text
+training/
+│
+├── README.md
+│
+└── keras models/
+    ├── corn_disease_best.keras
+    ├── cotton_disease_v8_best.keras
+    ├── paddy_disease_v2_best.keras
+    ├── sugarcane_disease_v2_best.keras
+    └── wheat_disease_best.keras

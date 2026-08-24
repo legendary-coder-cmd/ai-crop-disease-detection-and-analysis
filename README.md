@@ -137,3 +137,87 @@ The system is designed around the **Arduino UNO Q** platform.
                          │
                          ▼
               🌐 Multilingual Diagnosis
+
+
+
+🧠 AI Architecture
+
+CropAI uses separate models for each crop instead of combining every disease into one large classifier.
+
+                         🌿 Leaf Image
+                              │
+                              ▼
+                       🌾 Crop Detection
+                              │
+       ┌──────────────────────┼──────────────────────┐
+       │                      │                      │
+       ▼                      ▼                      ▼
+    🌽 Corn                🌿 Cotton               🌾 Paddy
+       │                      │                      │
+       ▼                      ▼                      ▼
+  Corn Model             Cotton Model            Paddy Model
+       │                      │                      │
+       └──────────────────────┼──────────────────────┘
+                              │
+                              ▼
+                       🦠 Disease Result
+
+
+
+🗂️ Repository Structure
+
+ai-crop-disease-detection-and-analysis/
+│
+├── 📁 Scripts/
+│   ├── crop_training_script.py
+│   ├── cropai_one_ai_unoq_multilingual.py
+│   │
+│   └── 📁 camera/
+│       ├── corn_ai_unoq.py
+│       ├── cotton_ai_unoq.py
+│       ├── paddy_ai_unoq.py
+│       ├── sugarcane_ai_unoq.py
+│       └── wheat_ai_unoq.py
+│
+├── 📁 datasets/
+│   ├── corn dataset/
+│   ├── cotton dataset/
+│   ├── paddy dataset/
+│   ├── sugarcane dataset/
+│   └── wheat dataset/
+│
+├── 📁 trained models/
+│   ├── README.md
+│   └── 📁 keras models/
+│       ├── corn_disease_best.keras
+│       ├── cotton_disease_v8_best.keras
+│       ├── paddy_disease_v2_best.keras
+│       ├── sugarcane_disease_v2_best.keras
+│       └── wheat_disease_best.keras
+│
+├── 📁 schematics/
+│   ├── 01_battery_supply_handdrawn.jpeg
+│   ├── 02_block_diagram_and_circuit.jpeg
+│   └── 03_circuit_diagram_temperature_humidity_sensor.png
+│
+├── 📁 hardware/
+│   ├── README.md
+│   ├── arduino_uno_q_board.jpg
+│   ├── arduino_uno_q_dht11.jpg
+│   ├── arduino_uno_q_hub.jpg
+│   ├── camera_setup.jpg
+│   ├── complete_prototype.jpg
+│   └── battery_pack_12v.jpg
+│
+├── 📁 examples/
+│   ├── README.md
+│   ├── corn_common_rust.png
+│   ├── cotton_leaf_curl_virus.png
+│   ├── paddy_bacterial_panicle_blight.png
+│   ├── sugarcane_red_rot.png
+│   └── wheat_septoria.png
+│
+├── requirements.txt
+├── .gitignore
+├── .gitattributes
+└── README.md

@@ -1,0 +1,15 @@
+# CropAI UNO Q runtime requirements
+# Install inside the UNO Q Linux Python environment.
+#
+# Keep your existing TensorFlow build if it is already working with
+# the trained .keras models. If pip cannot install the latest TensorFlow
+# on the UNO Q architecture, use the TensorFlow version/build already
+# supported by your UNO Q environment.
+
+tensorflow
+numpy
+opencv-python
+Pillow
+reportlab
+pyserial
+deep-translator

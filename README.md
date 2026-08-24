@@ -1,4 +1,4 @@
-# ai-crop-disease-detection-and-analysis
+# AI-crop-disease-detection-and-analysis
 AI-based crop disease detection using Arduino UNO Q, webcam (or) camera, and TensorFlow/Keras models.
 # CropAI – Multi-Crop AI Farm Assist
 

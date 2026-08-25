@@ -30,17 +30,12 @@
 #   Sugarcane/Wheat class order is kept in one clearly marked section
 #   because the uploaded .keras files do not contain folder-name metadata.
 #
-# DHT11 serial protocol expected from the UNO Q:
-#   T=28.4,RH=71.2
-# or:
-#   28.4,71.2
-# Any other text is ignored.
-#
-# Example Linux serial:
-#   /dev/ttyACM0
+# DHT11 communication uses Arduino_RouterBridge on the UNO Q MCU.
+# The MCU exposes get_dht_temperature() and get_dht_humidity();
+# Linux reads them through /var/run/arduino-router.sock using msgpack.
 #
 # Install on the UNO Q Linux environment as needed:
-#   python3 -m pip install tensorflow opencv-python pillow reportlab pyserial deep-translator
+#   python3 -m pip install tensorflow numpy opencv-python pillow reportlab msgpack deep-translator
 #
 # ================================================================
 
@@ -111,25 +106,66 @@ except Exception:
 # PATHS
 # ================================================================
 
-# Windows development path
+SCRIPT_DIR = Path(__file__).resolve().parent
+REPO_ROOT = SCRIPT_DIR.parent
 WINDOWS_ROOT = Path(r"G:\CropAI")
-
-# UNO Q Linux path
 LINUX_ROOT = Path("/home/arduino/CropAI")
 
-if WINDOWS_ROOT.exists():
-    ROOT = WINDOWS_ROOT
-elif LINUX_ROOT.exists():
-    ROOT = LINUX_ROOT
-else:
-    ROOT = Path.cwd()
+ROOT_CANDIDATES = []
+if os.environ.get("CROP_AI_ROOT"):
+    ROOT_CANDIDATES.append(Path(os.environ["CROP_AI_ROOT"]).expanduser())
+ROOT_CANDIDATES.extend([REPO_ROOT, WINDOWS_ROOT, LINUX_ROOT])
 
-MODEL_DIR = ROOT / "models"
+_seen_roots = set()
+_unique_roots = []
+for candidate in ROOT_CANDIDATES:
+    key = str(candidate)
+    if key not in _seen_roots:
+        _seen_roots.add(key)
+        _unique_roots.append(candidate)
+ROOT_CANDIDATES = _unique_roots
+
+MODEL_FILENAMES = {
+    "corn": "corn_disease_best.keras",
+    "cotton": "cotton_disease_v8_best.keras",
+    "paddy": "paddy_disease_v2_best.keras",
+    "sugarcane": "sugarcane_disease_v2_best.keras",
+    "wheat": "wheat_disease_best.keras",
+}
+
+# Repository layout: trained models/keras models/
+# UNO Q deployment layout: models/
+MODEL_DIR = None
+ROOT = REPO_ROOT
+for candidate_root in ROOT_CANDIDATES:
+    for candidate_dir in (
+        candidate_root / "trained models" / "keras models",
+        candidate_root / "models",
+    ):
+        if candidate_dir.exists() and any(
+            (candidate_dir / filename).exists()
+            for filename in MODEL_FILENAMES.values()
+        ):
+            ROOT = candidate_root
+            MODEL_DIR = candidate_dir
+            break
+    if MODEL_DIR is not None:
+        break
+
+if MODEL_DIR is None:
+    MODEL_DIR = ROOT / "trained models" / "keras models"
+
 OUTPUT_DIR = ROOT / "captured_results"
 CROP_CARD_DIR = ROOT / "crop_cards"
 
-OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-CROP_CARD_DIR.mkdir(parents=True, exist_ok=True)
+try:
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    CROP_CARD_DIR.mkdir(parents=True, exist_ok=True)
+except OSError:
+    OUTPUT_DIR = Path.cwd() / "captured_results"
+    CROP_CARD_DIR = Path.cwd() / "crop_cards"
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    CROP_CARD_DIR.mkdir(parents=True, exist_ok=True)
 
 
 # ================================================================
@@ -137,11 +173,8 @@ CROP_CARD_DIR.mkdir(parents=True, exist_ok=True)
 # ================================================================
 
 MODEL_PATHS = {
-    "corn": MODEL_DIR / "corn_disease_best.keras",
-    "cotton": MODEL_DIR / "cotton_disease_v8_best.keras",
-    "paddy": MODEL_DIR / "paddy_disease_v2_best.keras",
-    "sugarcane": MODEL_DIR / "sugarcane_disease_v2_best.keras",
-    "wheat": MODEL_DIR / "wheat_disease_best.keras",
+    crop: MODEL_DIR / filename
+    for crop, filename in MODEL_FILENAMES.items()
 }
 
 
@@ -1220,9 +1253,6 @@ class DHTBridgeReader:
 DHT = DHTBridgeReader()
 
 
-DHT = DHTSerialReader()
-
-
 # ================================================================
 # MODEL MANAGER
 # ================================================================
@@ -1235,9 +1265,13 @@ class ModelManager:
 
     def load(self, crop):
 
+        if crop not in MODEL_PATHS:
+            raise KeyError(f"Unknown crop: {crop}")
+
         if tf is None:
             raise RuntimeError(
-                "TensorFlow/Keras is not installed."
+                "TensorFlow/Keras is not installed. "
+                "Install the supported TensorFlow build for the UNO Q."
             )
 
         if crop in self.models:
@@ -1247,8 +1281,21 @@ class ModelManager:
 
         if not path.exists():
             raise FileNotFoundError(
-                f"Model not found:\n{path}"
+                f"Model not found:\n{path}\n\n"
+                "If the repository was cloned with Git LFS, run "
+                "`git lfs install` and `git lfs pull`."
             )
+
+        try:
+            with path.open("rb") as model_file:
+                header = model_file.read(200)
+            if header.startswith(b"version https://git-lfs.github.com/spec/v1"):
+                raise RuntimeError(
+                    f"{path.name} is a Git LFS pointer, not the actual model. "
+                    "Run `git lfs install` and `git lfs pull`."
+                )
+        except OSError as exc:
+            raise RuntimeError(f"Cannot read model file: {path}\n{exc}") from exc
 
         print(
             f"Loading {crop} model:\n{path}"

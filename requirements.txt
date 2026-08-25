@@ -13,3 +13,4 @@ Pillow
 reportlab
 pyserial
 deep-translator
+msgpack
